@@ -1,6 +1,7 @@
 package database
 
 import (
+	"auth-service/internal/user"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5"
@@ -36,7 +37,7 @@ func LoadConfig(file string) (*Config, error) {
 }
 
 func CreateConnection() *pgx.Conn {
-	config, err := LoadConfig("C:\\Users\\user\\Desktop\\coding and stuff\\study or portfolio projects\\auth-service\\configs\\config.yaml")
+	config, err := LoadConfig("/home/zaproktnost/GolandProjects/log-aggretator/configs/config.yaml")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -66,12 +67,12 @@ func CreateTable(conn *pgx.Conn) {
 	}
 }
 
-func CreateUser(conn *pgx.Conn, username, password string) {
+func CreateUser(conn *pgx.Conn, u user.RegularUser) {
 	query := `INSERT INTO users (username, password) values (@username, @password)`
 
 	args := pgx.NamedArgs{
-		"username": username,
-		"password": password,
+		"username": u.Username,
+		"password": u.Password.Hashed,
 	}
 	_, err := conn.Exec(context.Background(), query, args)
 	if err != nil {

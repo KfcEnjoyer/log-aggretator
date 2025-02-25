@@ -1,32 +1,37 @@
 package storage
 
 import (
+	"auth-service/internal/database"
 	"auth-service/internal/user"
 	"encoding/json"
-	"io"
 	"net/http"
 )
 
-type Storage struct {
-	Users map[int]*user.User
-}
+var conn = database.CreateConnection()
 
-func (s *Storage) Create(w http.ResponseWriter, r *http.Request) error {
+func Create(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if r.Method == "POST" {
-		content, err := io.ReadAll(r.Body)
+		decoder := json.NewDecoder(r.Body)
+
+		var u user.RegularUser
+
+		err := decoder.Decode(&u)
 		if err != nil {
-			return err
+			panic(err)
 		}
 
-		u := new(user.User)
-
-		if err := json.Unmarshal(content, &u); err != nil {
-			return err
+		u.Password.Hash()
+		response := map[string]string{
+			"message": "Created successfully!",
+			"user":    u.Username,
 		}
 
+		database.CreateUser(conn, u)
+
+		w.Header().Set("Content-Type", "application/jsonF")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(response)
 	}
-
-	return nil
 }

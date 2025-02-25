@@ -2,8 +2,10 @@ package main
 
 import (
 	"auth-service/internal/database"
+	"auth-service/internal/storage"
 	"context"
 	"log"
+	"net/http"
 )
 
 func main() {
@@ -15,5 +17,9 @@ func main() {
 
 	database.CreateTable(conn)
 
-	database.CreateUser(conn, "Nsdad", "dasdasd")
+	port := "localhost:8080"
+	http.HandleFunc("/create", storage.Create)
+
+	http.ListenAndServe(port, nil)
+
 }

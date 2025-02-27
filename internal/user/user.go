@@ -3,6 +3,8 @@ package user
 import (
 	"auth-service/pkg/validator"
 	"golang.org/x/crypto/bcrypt"
+	"log"
+	"strings"
 )
 
 var v = validator.NewValidator()
@@ -29,23 +31,32 @@ type Password struct {
 }
 
 func (p *Password) Hash() {
-	h, err := bcrypt.GenerateFromPassword([]byte(p.Plain), bcrypt.DefaultCost)
+	h, err := bcrypt.GenerateFromPassword([]byte(strings.TrimSpace(p.Plain)), bcrypt.DefaultCost)
 	v.CheckError(err)
 
 	p.Hashed = string(h)
 }
 
+func (p *Password) Compare(hashed string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(p.Plain))
+	if err != nil {
+		log.Println(err)
+	}
+
+	return err == nil
+}
+
 //
-//func GrantPermissions(user RegularUser) Admin{
+//func GrantPermissions(user_db RegularUser) Admin{
 //	var a a
 //
-//	if user.Role != "admin"{
+//	if user_db.Role != "admin"{
 //
 //		return nil
 //	}
 //
 //	a := Admin{
-//		RegularUser: user,
+//		RegularUser: user_db,
 //		Permissions: nil,
 //	}
 //

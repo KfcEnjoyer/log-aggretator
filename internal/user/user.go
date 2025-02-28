@@ -37,10 +37,10 @@ func (p *Password) Hash() {
 	p.Hashed = string(h)
 }
 
-func (p *Password) Compare(hashed string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(p.Plain))
+func (p *Password) Compare(pw string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(p.Hashed), []byte(pw))
 	if err != nil {
-		log.Println(err)
+		log.Println(err, " bbb")
 	}
 
 	return err == nil

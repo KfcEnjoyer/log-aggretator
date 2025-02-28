@@ -3,15 +3,17 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"sync"
 )
 
-var conn *pgx.Conn
-var once sync.Once
+var (
+	dbPool *pgxpool.Pool
+	once   sync.Once
+)
 
 type Config struct {
 	Database struct {
@@ -39,9 +41,9 @@ func LoadConfig(file string) (*Config, error) {
 	return c, nil
 }
 
-func CreateConnection() {
+func CreateConnection(filePath string) {
 	once.Do(func() {
-		config, err := LoadConfig("C:\\Users\\user\\Desktop\\coding and stuff\\study or portfolio projects\\auth-service\\configs\\config.yaml")
+		config, err := LoadConfig(filePath)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -54,16 +56,22 @@ func CreateConnection() {
 			config.Database.Dbname,
 		)
 
-		conn, err = pgx.Connect(context.Background(), connStr)
+		poolCfg, err := pgxpool.ParseConfig(connStr)
+		if err != nil {
+			log.Println("Error connecting to database:", err)
+		}
+
+		dbPool, err = pgxpool.NewWithConfig(context.Background(), poolCfg)
 		if err != nil {
 			log.Println("Error connecting to database:", err)
 		}
 	})
 }
 
-func GetConnection() *pgx.Conn {
-	if conn == nil {
-		CreateConnection()
+func GetConnection() *pgxpool.Pool {
+	if dbPool == nil {
+		log.Println("Database is not connected")
+		return nil
 	}
-	return conn
+	return dbPool
 }

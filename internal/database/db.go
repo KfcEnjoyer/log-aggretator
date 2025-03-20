@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -23,6 +24,11 @@ type Config struct {
 		Password string `yaml:"password"`
 		Dbname   string `yaml:"dbname"`
 	} `yaml:"database"`
+	Kafka struct {
+		Brokers []string `yaml:"brokers"`
+		Topic   string   `yaml:"topic"`
+		GroupID string   `yaml:"groupID"`
+	} `yaml:"kafka"`
 }
 
 func LoadConfig(file string) (*Config, error) {
@@ -33,9 +39,16 @@ func LoadConfig(file string) (*Config, error) {
 
 	c := new(Config)
 
-	err = yaml.Unmarshal(data, c)
+	dataStr := string(data)
+	dataStr = os.ExpandEnv(dataStr)
+
+	err = yaml.Unmarshal([]byte(dataStr), c)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(c.Kafka.Brokers) == 1 && strings.Contains(c.Kafka.Brokers[0], ",") {
+		c.Kafka.Brokers = strings.Split(c.Kafka.Brokers[0], ",")
 	}
 
 	return c, nil
@@ -45,7 +58,8 @@ func CreateConnection(filePath string) {
 	once.Do(func() {
 		config, err := LoadConfig(filePath)
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("Error loading config: %v", err)
+			return
 		}
 
 		connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
@@ -58,13 +72,22 @@ func CreateConnection(filePath string) {
 
 		poolCfg, err := pgxpool.ParseConfig(connStr)
 		if err != nil {
-			log.Println("Error connecting to database:", err)
+			log.Println("Error parsing pool config:", err)
+			return
 		}
 
 		dbPool, err = pgxpool.NewWithConfig(context.Background(), poolCfg)
 		if err != nil {
 			log.Println("Error connecting to database:", err)
+			return
 		}
+
+		if err := dbPool.Ping(context.Background()); err != nil {
+			log.Println("Error pinging database:", err)
+			return
+		}
+
+		log.Println("Successfully connected to database")
 	})
 }
 

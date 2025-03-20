@@ -1,6 +1,10 @@
 database:
-  host: "localhost"
+  host: "postgres"
   port: 5432
   user: "postgres"
-  password: "lolkek12"
+  password: "password"
   dbname: "users"
+
+kafka:
+  brokers:
+    - "kafka:29092"

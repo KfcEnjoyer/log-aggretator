@@ -19,7 +19,12 @@ const (
 )
 
 func main() {
-	database.CreateConnection("C:\\Users\\user\\Desktop\\coding and stuff\\study or portfolio projects\\auth-service\\configs\\config.yaml")
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "../configs/config.yaml"
+	}
+
+	database.CreateConnection(configPath)
 
 	conn := database.GetConnection()
 	if conn == nil {
@@ -34,7 +39,11 @@ func main() {
 		log.Printf("Warning: Failed to create/verify logs table: %v", err)
 	}
 
+	kafkaBrokers := os.Getenv("KAFKA_BROKERS")
 	brokers := []string{"localhost:9092"}
+	if kafkaBrokers != "" {
+		brokers = []string{kafkaBrokers}
+	}
 
 	auth := services.NewAuthService(userRepo, logRepo, brokers)
 	defer auth.Close()
@@ -47,23 +56,29 @@ func main() {
 		auth.LogRepo.CreateLog(l)
 	}
 
-	port := "localhost:8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	serverAddr := fmt.Sprintf("0.0.0.0:%s", port)
+
 	http.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
 		services.Create(w, r, auth)
 	})
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		services.LogIn(w, r, auth)
 	})
-	//http.HandleFunc("/update-role", func(w http.ResponseWriter, r *http.Request) {
-	//	services.UpdateRole(w, r, auth)
-	//})
 	http.HandleFunc("/home", Home)
 	http.HandleFunc("/open", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Open endpoint accessed")
 	})
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "Auth service is running. Version: %s", VERSION)
+	})
 
 	server := &http.Server{
-		Addr: port,
+		Addr: serverAddr,
 	}
 
 	go func() {
@@ -75,7 +90,7 @@ func main() {
 		server.Close()
 	}()
 
-	log.Printf("Starting auth service on %s...", port)
+	log.Printf("Starting auth service on %s...", serverAddr)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed: %v", err)
 	}

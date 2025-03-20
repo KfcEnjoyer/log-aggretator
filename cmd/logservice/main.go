@@ -6,12 +6,18 @@ import (
 	"auth-service/kafka"
 	"context"
 	"log"
+	"os"
 	"os/signal"
 	"syscall"
 )
 
 func main() {
-	database.CreateConnection("C:\\Users\\user\\Desktop\\coding and stuff\\study or portfolio projects\\auth-service\\configs\\config.yaml")
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "./configs/config.yaml"
+	}
+
+	database.CreateConnection(configPath)
 
 	conn := database.GetConnection()
 	if conn == nil {
@@ -25,9 +31,21 @@ func main() {
 		log.Printf("Warning: Failed to create/verify logs table: %v", err)
 	}
 
+	kafkaBrokers := os.Getenv("KAFKA_BROKERS")
 	brokers := []string{"localhost:9092"}
-	topic := "auth-logs"
-	groupID := "log-consumer-group"
+	if kafkaBrokers != "" {
+		brokers = []string{kafkaBrokers}
+	}
+
+	topic := os.Getenv("KAFKA_TOPIC")
+	if topic == "" {
+		topic = "auth-logs"
+	}
+
+	groupID := os.Getenv("KAFKA_GROUP_ID")
+	if groupID == "" {
+		groupID = "log-consumer-group"
+	}
 
 	consumer := kafka.NewLogConsumer(brokers, topic, groupID, logRepo)
 

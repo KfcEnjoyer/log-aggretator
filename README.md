@@ -20,7 +20,7 @@ A secure authentication service with user management and comprehensive logging b
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/auth-service.git
+   git clone https://github.com/KfcEnjoyer/auth-service.git
    cd auth-service
    ```
 

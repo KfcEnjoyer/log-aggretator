@@ -2,6 +2,23 @@
 
 A secure authentication service with user management and comprehensive logging built with Go, PostgreSQL, and Kafka.
 
+## Table of Contents
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [API Endpoints](#api-endpoints)
+  - [Create User](#create-user)
+  - [Login](#login)
+  - [Home](#home-welcome-page)
+  - [Health Check](#health-check)
+- [Architecture](#architecture)
+- [Configuration](#configuration)
+- [Monitoring and Logging](#monitoring-and-logging)
+- [Development](#development)
+  - [Without Docker](#without-docker)
+- [Security Considerations](#security-considerations)
+- [License](#license)
+
 ## Features
 
 - User registration and login
@@ -150,7 +167,6 @@ To view the logs:
    go run cmd/auth/main.go
    go run cmd/logservice/main.go
    ```
-
 
 ## Security Considerations
 

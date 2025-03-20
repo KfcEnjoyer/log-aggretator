@@ -151,11 +151,6 @@ To view the logs:
    go run cmd/logservice/main.go
    ```
 
-### Testing
-
-```
-go test ./...
-```
 
 ## Security Considerations
 

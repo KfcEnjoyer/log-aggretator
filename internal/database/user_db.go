@@ -1,7 +1,6 @@
-package user_db
+package database
 
 import (
-	"auth-service/internal/database"
 	"auth-service/internal/user"
 	"context"
 	"github.com/jackc/pgx/v5"
@@ -21,7 +20,7 @@ type UserRepoService struct {
 
 func NewUserRepoService() *UserRepoService {
 	return &UserRepoService{
-		dbPool: database.GetConnection(),
+		dbPool: GetConnection(),
 	}
 }
 
@@ -35,7 +34,6 @@ func (r *UserRepoService) CreateUser(u user.RegularUser) error {
 	}
 	_, err := r.dbPool.Exec(context.Background(), query, args)
 	if err != nil {
-		log.Fatalf("Query failed: %v", err)
 		return err
 	}
 
